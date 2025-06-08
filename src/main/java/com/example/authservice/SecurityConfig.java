@@ -24,6 +24,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/", "/index.html", "/register.html", "/login.html", "/dashboard.html").permitAll()
                     .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/h2-console/**").permitAll()
+                    .requestMatchers("/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

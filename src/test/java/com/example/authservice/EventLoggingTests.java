@@ -9,6 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -21,6 +22,8 @@ class EventLoggingTests {
     UserRepository userRepository;
     @Autowired
     EventLogRepository logRepository;
+    @Autowired
+    JwtService jwtService;
 
     @Test
     void loginCreatesEventLog() throws Exception {
@@ -37,5 +40,21 @@ class EventLoggingTests {
 
         assertThat(logRepository.findAll().stream()
                 .anyMatch(l -> l.getUsername().equals("logger") && l.getEventType() == EventType.LOGIN)).isTrue();
+    }
+
+    @Test
+    void accessCreatesEventLog() throws Exception {
+        User user = new User();
+        user.setUsername("jack");
+        user.setPassword("pass");
+        user.getRoles().add(Role.USER);
+        userRepository.save(user);
+        String token = jwtService.generateAccessToken(user);
+
+        mockMvc.perform(get("/secret").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        assertThat(logRepository.findAll().stream()
+                .anyMatch(l -> l.getUsername().equals("jack") && l.getEventType() == EventType.ACCESS)).isTrue();
     }
 }

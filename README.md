@@ -1,19 +1,18 @@
 # Spring Security Auth Service
 
-This repository contains an example Authentication service built using **Java 17** and **Spring Boot**. The project will demonstrate JWT-based authentication and authorization as part of a microservice architecture. The initial application only includes a basic Spring Boot setup. Future work will follow the agreed-upon plan:
+This repository contains an example Authentication service built using **Java 17** and **Spring Boot**. The project demonstrates JWT-based authentication and authorization as part of a microservice architecture. The service currently includes the following features:
 
 - User registration with password hashing using BCrypt
 - Login endpoint that generates access and refresh JWTs
 - Automatic token refresh at `/auth/refresh`
 - Token validation on each request via the `Authorization: Bearer` header
 - Role support: `USER`, `ADMIN`, `MODERATOR`
-- Token revocation using a blacklist stored in Redis or a database
+- Token revocation using a blacklist stored in a database
 - Logout that adds the refresh token to the blacklist
-- Microservices: this `auth-service` will handle registration, login and token validation
 - Event logging for logins, logouts and access attempts
-- A "Security Dashboard" for administrators with activity charts and suspicious activity notifications
-- Options to block tokens or terminate sessions
-- MFA support
+- A simple Security Dashboard for administrators
+- Endpoints to block tokens or terminate sessions
+- Optional MFA support using TOTP codes
 
 ## Pushing this repository to GitHub
 
