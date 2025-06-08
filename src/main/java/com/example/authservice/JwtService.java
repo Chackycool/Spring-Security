@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.time.Instant;
 
 @Service
 public class JwtService {
@@ -51,5 +52,10 @@ public class JwtService {
 
     public String extractUsername(String token) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
+    }
+
+    public Instant extractExpiration(String token) {
+        Date exp = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getExpiration();
+        return exp.toInstant();
     }
 }
