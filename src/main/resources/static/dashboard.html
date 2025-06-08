@@ -10,11 +10,15 @@
     <h1>Dashboard</h1>
     <p>You are logged in.</p>
     <pre id="stats"></pre>
+    <h2>Event Logs</h2>
+    <table id="events"></table>
+    <h2>Users</h2>
+    <table id="users"></table>
     <button id="logout">Logout</button>
 </div>
 <script>
+    const token = localStorage.getItem('accessToken');
     async function loadStats() {
-        const token = localStorage.getItem('accessToken');
         if (!token) return;
         const res = await fetch('/admin/dashboard', {headers: {Authorization: 'Bearer ' + token}});
         if (res.ok) {
@@ -22,7 +26,54 @@
             document.getElementById('stats').textContent = JSON.stringify(data);
         }
     }
+
+    async function loadEvents() {
+        if (!token) return;
+        const res = await fetch('/admin/events', {headers: {Authorization: 'Bearer ' + token}});
+        if (res.ok) {
+            const rows = await res.json();
+            const table = document.getElementById('events');
+            table.innerHTML = '<tr><th>Timestamp</th><th>User</th><th>Event</th></tr>' +
+                rows.map(r => `<tr><td>${r.timestamp}</td><td>${r.username}</td><td>${r.eventType}</td></tr>`).join('');
+        }
+    }
+
+    async function loadUsers() {
+        if (!token) return;
+        const res = await fetch('/admin/users', {headers: {Authorization: 'Bearer ' + token}});
+        if (res.ok) {
+            const users = await res.json();
+            const table = document.getElementById('users');
+            table.innerHTML = '<tr><th>Username</th><th>Roles</th><th>Actions</th></tr>' +
+                users.map(u => {
+                    const roles = u.roles.join(', ');
+                    const add = u.roles.includes('ADMIN') ? '' : `<button onclick="addRole(${u.id},'ADMIN')">Grant ADMIN</button>`;
+                    const del = u.roles.includes('ADMIN') ? `<button onclick="delRole(${u.id},'ADMIN')">Remove ADMIN</button>` : '';
+                    return `<tr><td>${u.username}</td><td>${roles}</td><td>${add} ${del}</td></tr>`;
+                }).join('');
+        }
+    }
+
+    async function addRole(id, role) {
+        await fetch(`/admin/users/${id}/roles`, {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'},
+            body: JSON.stringify({role})
+        });
+        loadUsers();
+    }
+
+    async function delRole(id, role) {
+        await fetch(`/admin/users/${id}/roles/${role}`, {
+            method: 'DELETE',
+            headers: {Authorization: 'Bearer ' + token}
+        });
+        loadUsers();
+    }
+
     loadStats();
+    loadEvents();
+    loadUsers();
     document.getElementById('logout').addEventListener('click', async () => {
         const refresh = localStorage.getItem('refreshToken');
         if (refresh) {

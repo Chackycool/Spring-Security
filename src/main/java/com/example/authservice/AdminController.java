@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin")
@@ -14,6 +15,7 @@ import java.util.Map;
 public class AdminController {
     private final TokenBlacklistService blacklistService;
     private final EventLogRepository eventLogRepository;
+    private final UserRepository userRepository;
 
     @PostMapping("/revoke")
     public ResponseEntity<Void> revoke(@RequestBody TokenRequest request) {
@@ -28,6 +30,38 @@ public class AdminController {
         long accesses = eventLogRepository.countByEventType(EventType.ACCESS);
         return Map.of("logins", logins, "logouts", logouts, "accesses", accesses);
     }
+
+    @GetMapping("/events")
+    public java.util.List<EventLog> events() {
+        return eventLogRepository.findTop20ByOrderByTimestampDesc();
+    }
+
+    @GetMapping("/users")
+    public java.util.List<User> users() {
+        return userRepository.findAll();
+    }
+
+    @PostMapping("/users/{id}/roles")
+    public ResponseEntity<User> addRole(@PathVariable Long id, @RequestBody RoleRequest request) {
+        return userRepository.findById(id)
+                .map(u -> {
+                    u.getRoles().add(Role.valueOf(request.role()));
+                    userRepository.save(u);
+                    return ResponseEntity.ok(u);
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/users/{id}/roles/{role}")
+    public ResponseEntity<User> removeRole(@PathVariable Long id, @PathVariable String role) {
+        return userRepository.findById(id)
+                .map(u -> {
+                    u.getRoles().remove(Role.valueOf(role));
+                    userRepository.save(u);
+                    return ResponseEntity.ok(u);
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
+    public record RoleRequest(String role) {}
 
     public record TokenRequest(String token) {}
 }
