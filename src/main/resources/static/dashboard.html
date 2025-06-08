@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+    <h1>Dashboard</h1>
+    <p>You are logged in.</p>
+    <button id="logout">Logout</button>
+</div>
+<script>
+    document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login.html';
+    });
+</script>
+</body>
+</html>
