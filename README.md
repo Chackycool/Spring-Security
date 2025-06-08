@@ -13,6 +13,8 @@ This repository contains an example Authentication service built using **Java 17
 - A simple Security Dashboard for administrators
 - Endpoints to block tokens or terminate sessions
 - Optional MFA support using TOTP codes
+- Persistent H2 file database for data retention across restarts
+- Dashboard displays recent events and allows managing user roles
 
 ## Pushing this repository to GitHub
 
