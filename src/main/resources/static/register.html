@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Register</title>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<h1>Register</h1>
-<form id="registerForm">
-    <label>
-        Username:
-        <input type="text" id="username" required>
-    </label><br>
-    <label>
-        Password:
-        <input type="password" id="password" required>
-    </label><br>
-    <button type="submit">Register</button>
-</form>
-<p id="result"></p>
-<p><a href="/login">Already registered? Login</a></p>
+<div class="container">
+    <h1>Register</h1>
+    <form id="registerForm">
+        <label>
+            Username:
+            <input type="text" id="username" required>
+        </label>
+        <label>
+            Password:
+            <input type="password" id="password" required>
+        </label>
+        <button type="submit">Register</button>
+    </form>
+    <p id="result"></p>
+    <footer><a href="/login">Already registered? Login</a></footer>
+</div>
 <script>
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
