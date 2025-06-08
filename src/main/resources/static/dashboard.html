@@ -12,7 +12,15 @@
     <button id="logout">Logout</button>
 </div>
 <script>
-    document.getElementById('logout').addEventListener('click', () => {
+    document.getElementById('logout').addEventListener('click', async () => {
+        const refresh = localStorage.getItem('refreshToken');
+        if (refresh) {
+            await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({refreshToken: refresh})
+            });
+        }
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         window.location.href = '/login.html';

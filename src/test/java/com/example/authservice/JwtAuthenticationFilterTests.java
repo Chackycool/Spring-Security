@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,8 @@ class JwtAuthenticationFilterTests {
     JwtAuthenticationFilter filter;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    TokenBlacklistService blacklistService;
 
     @AfterEach
     void clearContext() {
@@ -46,6 +49,27 @@ class JwtAuthenticationFilterTests {
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("joe");
+        verify(chain).doFilter(request, response);
+    }
+
+    @Test
+    void filterRejectsRevokedToken() throws Exception {
+        User user = new User();
+        user.setUsername("sam");
+        user.setPassword("pass");
+        user.getRoles().add(Role.USER);
+        userRepository.save(user);
+        String token = jwtService.generateAccessToken(user);
+        blacklistService.revokeToken(token, Instant.now().plusSeconds(60));
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer " + token);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = Mockito.mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(chain).doFilter(request, response);
     }
 }
