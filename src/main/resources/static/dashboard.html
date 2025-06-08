@@ -9,9 +9,20 @@
 <div class="container">
     <h1>Dashboard</h1>
     <p>You are logged in.</p>
+    <pre id="stats"></pre>
     <button id="logout">Logout</button>
 </div>
 <script>
+    async function loadStats() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+        const res = await fetch('/admin/dashboard', {headers: {Authorization: 'Bearer ' + token}});
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('stats').textContent = JSON.stringify(data);
+        }
+    }
+    loadStats();
     document.getElementById('logout').addEventListener('click', async () => {
         const refresh = localStorage.getItem('refreshToken');
         if (refresh) {

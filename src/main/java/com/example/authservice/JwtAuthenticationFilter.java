@@ -20,6 +20,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final TokenBlacklistService blacklistService;
+    private final EventLogRepository eventLogRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -34,6 +35,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
+                    EventLog log = new EventLog();
+                    log.setUsername(username);
+                    log.setEventType(EventType.ACCESS);
+                    log.setTimestamp(java.time.Instant.now());
+                    eventLogRepository.save(log);
                 });
             }
         }

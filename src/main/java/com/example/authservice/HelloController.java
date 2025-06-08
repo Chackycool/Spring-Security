@@ -9,4 +9,9 @@ public class HelloController {
     public String hello() {
         return "Auth Service is running";
     }
+
+    @GetMapping("/secret")
+    public String secret() {
+        return "Secret";
+    }
 }

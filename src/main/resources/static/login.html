@@ -17,6 +17,10 @@
             Password:
             <input type="password" id="password" required>
         </label>
+        <label>
+            MFA Code:
+            <input type="text" id="mfa">
+        </label>
         <button type="submit">Login</button>
     </form>
     <pre id="result"></pre>
@@ -28,7 +32,7 @@
         const res = await fetch('/auth/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({username: username.value, password: password.value})
+            body: JSON.stringify({username: username.value, password: password.value, mfaCode: mfa.value})
         });
         if (res.ok) {
             const data = await res.json();

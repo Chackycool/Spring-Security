@@ -24,6 +24,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final TokenBlacklistService blacklistService;
     private final EventLogRepository eventLogRepository;
+    private final MfaService mfaService;
 
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody RegisterRequest request) {
@@ -44,10 +45,26 @@ public class AuthController {
         if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        if (user.getMfaSecret() != null) {
+            if (request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+        }
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
         logEvent(user.getUsername(), EventType.LOGIN);
         return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken));
+    }
+
+    @PostMapping("/enable-mfa")
+    public ResponseEntity<MfaResponse> enableMfa(org.springframework.security.core.Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        if (user.getMfaSecret() == null) {
+            String secret = mfaService.generateSecret();
+            user.setMfaSecret(secret);
+            userRepository.save(user);
+        }
+        return ResponseEntity.ok(new MfaResponse(user.getMfaSecret()));
     }
 
     @PostMapping("/refresh")
@@ -78,9 +95,10 @@ public class AuthController {
     }
 
     public record RegisterRequest(String username, String password) {}
-    public record LoginRequest(String username, String password) {}
+    public record LoginRequest(String username, String password, String mfaCode) {}
     public record LoginResponse(String accessToken, String refreshToken) {}
     public record RefreshRequest(String refreshToken) {}
+    public record MfaResponse(String secret) {}
 
     private void logEvent(String username, EventType type) {
         EventLog log = new EventLog();
