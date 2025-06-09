@@ -40,10 +40,27 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         User user = userRepository.findByUsername(request.username()).orElse(null);
         if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (user.isBlocked()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (user.isMfaChallenge()) {
+            if (user.getMfaSecret() == null || request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            user.setMfaChallenge(false);
+            userRepository.save(user);
+        }
+        if (user.getRoles().contains(Role.ADMIN) && user.getMfaSecret() == null) {
+            String secret = mfaService.generateSecret();
+            user.setMfaSecret(secret);
+            userRepository.save(user);
+            logEvent(user.getUsername(), EventType.LOGIN);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(new MfaResponse(secret));
         }
         if (user.getMfaSecret() != null) {
             if (request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
@@ -74,8 +91,19 @@ public class AuthController {
         }
         String username = jwtService.extractUsername(request.refreshToken());
         User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null) {
+        if (user == null || user.isBlocked()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (user.isMfaChallenge()) {
+            if (user.getMfaSecret() == null || request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            user.setMfaChallenge(false);
+            userRepository.save(user);
+        } else if (user.getMfaSecret() != null) {
+            if (request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
         }
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
@@ -97,7 +125,7 @@ public class AuthController {
     public record RegisterRequest(String username, String password) {}
     public record LoginRequest(String username, String password, String mfaCode) {}
     public record LoginResponse(String accessToken, String refreshToken) {}
-    public record RefreshRequest(String refreshToken) {}
+    public record RefreshRequest(String refreshToken, String mfaCode) {}
     public record MfaResponse(String secret) {}
 
     private void logEvent(String username, EventType type) {
