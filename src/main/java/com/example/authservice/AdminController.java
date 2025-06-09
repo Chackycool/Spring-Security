@@ -16,6 +16,7 @@ public class AdminController {
     private final TokenBlacklistService blacklistService;
     private final EventLogRepository eventLogRepository;
     private final UserRepository userRepository;
+    private final UserBlacklistService userBlacklistService;
 
     @PostMapping("/revoke")
     public ResponseEntity<Void> revoke(@RequestBody TokenRequest request) {
@@ -81,7 +82,24 @@ public class AdminController {
                 }).orElse(ResponseEntity.notFound().build());
     }
 
-    public record RoleRequest(String role) {}
+    @GetMapping("/blacklist")
+    public List<BlacklistedUser> listBlacklist() {
+        return userBlacklistService.list();
+    }
 
+    @PostMapping("/blacklist")
+    public ResponseEntity<Void> addBlacklist(@RequestBody UsernameRequest req) {
+        userBlacklistService.add(req.username());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/blacklist/{username}")
+    public ResponseEntity<Void> removeBlacklist(@PathVariable String username) {
+        userBlacklistService.remove(username);
+        return ResponseEntity.ok().build();
+    }
+
+    public record RoleRequest(String role) {}
     public record TokenRequest(String token) {}
+    public record UsernameRequest(String username) {}
 }

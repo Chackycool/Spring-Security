@@ -36,7 +36,21 @@
         });
         if (res.status === 202) {
             const data = await res.json();
-            document.getElementById('result').textContent = 'MFA secret: ' + data.secret;
+            const code = prompt('Enter MFA code (secret ' + data.secret + ')');
+            if (!code) return;
+            const retry = await fetch('/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: username.value, password: password.value, mfaCode: code})
+            });
+            if (!retry.ok) {
+                document.getElementById('result').textContent = 'MFA verification failed';
+                return;
+            }
+            const tokens = await retry.json();
+            localStorage.setItem('accessToken', tokens.accessToken);
+            localStorage.setItem('refreshToken', tokens.refreshToken);
+            window.location.href = '/dashboard.html';
         } else if (res.ok) {
             const data = await res.json();
             localStorage.setItem('accessToken', data.accessToken);
