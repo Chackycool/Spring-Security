@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtService.validate(token) && !blacklistService.isRevoked(token)) {
                 String username = jwtService.extractUsername(token);
                 userRepository.findByUsername(username).ifPresent(user -> {
-                    if (user.isBlocked()) {
+                    if (user.isBlocked() || user.isMfaChallenge()) {
                         return;
                     }
                     UsernamePasswordAuthenticationToken auth =

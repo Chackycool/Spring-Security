@@ -30,6 +30,9 @@ public class User implements UserDetails {
     private String mfaSecret;
 
     @Column(nullable = false)
+    private boolean mfaChallenge = false;
+
+    @Column(nullable = false)
     private boolean blocked = false;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -50,7 +53,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !blocked;
+        return !blocked && !mfaChallenge;
     }
 
     @Override

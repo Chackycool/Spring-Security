@@ -81,6 +81,16 @@ public class AdminController {
                 }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/users/{id}/challenge")
+    public ResponseEntity<User> challengeMfa(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(u -> {
+                    u.setMfaChallenge(true);
+                    userRepository.save(u);
+                    return ResponseEntity.ok(u);
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
     public record RoleRequest(String role) {}
 
     public record TokenRequest(String token) {}

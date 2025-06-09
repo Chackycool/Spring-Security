@@ -50,7 +50,8 @@
                     const add = u.roles.includes('ADMIN') ? '' : `<button onclick="addRole(${u.id},'ADMIN')">Grant ADMIN</button>`;
                     const del = u.roles.includes('ADMIN') ? `<button onclick="delRole(${u.id},'ADMIN')">Remove ADMIN</button>` : '';
                     const block = u.blocked ? `<button onclick="unblockUser(${u.id})">Unblock</button>` : `<button onclick="blockUser(${u.id})">Block</button>`;
-                    return `<tr><td>${u.username}</td><td>${roles}</td><td>${u.blocked}</td><td>${add} ${del} ${block}</td></tr>`;
+                    const challenge = `<button onclick="challengeMfa(${u.id})">Require MFA</button>`;
+                    return `<tr><td>${u.username}</td><td>${roles}</td><td>${u.blocked}</td><td>${add} ${del} ${block} ${challenge}</td></tr>`;
                 }).join('');
         }
     }
@@ -82,6 +83,14 @@
 
     async function unblockUser(id) {
         await fetch(`/admin/users/${id}/unblock`, {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + token}
+        });
+        loadUsers();
+    }
+
+    async function challengeMfa(id) {
+        await fetch(`/admin/users/${id}/challenge`, {
             method: 'POST',
             headers: {Authorization: 'Bearer ' + token}
         });
