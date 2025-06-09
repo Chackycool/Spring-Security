@@ -32,6 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtService.validate(token) && !blacklistService.isRevoked(token)) {
                 String username = jwtService.extractUsername(token);
                 userRepository.findByUsername(username).ifPresent(user -> {
+                    if (user.isBlocked()) {
+                        return;
+                    }
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);

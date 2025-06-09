@@ -44,12 +44,13 @@
         if (res.ok) {
             const users = await res.json();
             const table = document.getElementById('users');
-            table.innerHTML = '<tr><th>Username</th><th>Roles</th><th>Actions</th></tr>' +
+            table.innerHTML = '<tr><th>Username</th><th>Roles</th><th>Blocked</th><th>Actions</th></tr>' +
                 users.map(u => {
                     const roles = u.roles.join(', ');
                     const add = u.roles.includes('ADMIN') ? '' : `<button onclick="addRole(${u.id},'ADMIN')">Grant ADMIN</button>`;
                     const del = u.roles.includes('ADMIN') ? `<button onclick="delRole(${u.id},'ADMIN')">Remove ADMIN</button>` : '';
-                    return `<tr><td>${u.username}</td><td>${roles}</td><td>${add} ${del}</td></tr>`;
+                    const block = u.blocked ? `<button onclick="unblockUser(${u.id})">Unblock</button>` : `<button onclick="blockUser(${u.id})">Block</button>`;
+                    return `<tr><td>${u.username}</td><td>${roles}</td><td>${u.blocked}</td><td>${add} ${del} ${block}</td></tr>`;
                 }).join('');
         }
     }
@@ -71,9 +72,47 @@
         loadUsers();
     }
 
+    async function blockUser(id) {
+        await fetch(`/admin/users/${id}/block`, {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + token}
+        });
+        loadUsers();
+    }
+
+    async function unblockUser(id) {
+        await fetch(`/admin/users/${id}/unblock`, {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + token}
+        });
+        loadUsers();
+    }
+
     loadStats();
     loadEvents();
     loadUsers();
+
+    setInterval(async () => {
+        const refresh = localStorage.getItem('refreshToken');
+        if (!refresh) return;
+        const code = prompt('Enter MFA Code');
+        if (!code) return;
+        const res = await fetch('/auth/refresh', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({refreshToken: refresh, mfaCode: code})
+        });
+        if (res.ok) {
+            const data = await res.json();
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+        } else {
+            alert('MFA failed, logging out');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login.html';
+        }
+    }, 30 * 60 * 1000);
     document.getElementById('logout').addEventListener('click', async () => {
         const refresh = localStorage.getItem('refreshToken');
         if (refresh) {

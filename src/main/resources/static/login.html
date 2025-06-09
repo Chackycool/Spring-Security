@@ -34,7 +34,10 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({username: username.value, password: password.value, mfaCode: mfa.value})
         });
-        if (res.ok) {
+        if (res.status === 202) {
+            const data = await res.json();
+            document.getElementById('result').textContent = 'MFA secret: ' + data.secret;
+        } else if (res.ok) {
             const data = await res.json();
             localStorage.setItem('accessToken', data.accessToken);
             localStorage.setItem('refreshToken', data.refreshToken);

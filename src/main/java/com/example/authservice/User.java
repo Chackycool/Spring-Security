@@ -29,6 +29,9 @@ public class User implements UserDetails {
 
     private String mfaSecret;
 
+    @Column(nullable = false)
+    private boolean blocked = false;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
@@ -47,7 +50,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !blocked;
     }
 
     @Override
