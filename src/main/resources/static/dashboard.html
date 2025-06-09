@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <title>Dashboard</title>
     <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <div class="container">
     <h1>Dashboard</h1>
     <p>You are logged in.</p>
     <pre id="stats"></pre>
+    <h2>Visit Stats</h2>
+    <canvas id="visitChart" height="100"></canvas>
     <h2>Event Logs</h2>
     <table id="events"></table>
     <h2>Users</h2>
@@ -38,6 +41,22 @@
         }
     }
 
+    async function loadVisitStats() {
+        if (!token) return;
+        const res = await fetch('/admin/visit-stats', {headers: {Authorization: 'Bearer ' + token}});
+        if (res.ok) {
+            const rows = await res.json();
+            const ctx = document.getElementById('visitChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: rows.map(r => r.day),
+                    datasets: [{label: 'Visits', data: rows.map(r => r.count), borderColor: '#4CAF50'}]
+                }
+            });
+        }
+    }
+
     async function loadUsers() {
         if (!token) return;
         const res = await fetch('/admin/users', {headers: {Authorization: 'Bearer ' + token}});
@@ -50,7 +69,9 @@
                     const add = u.roles.includes('ADMIN') ? '' : `<button onclick="addRole(${u.id},'ADMIN')">Grant ADMIN</button>`;
                     const del = u.roles.includes('ADMIN') ? `<button onclick="delRole(${u.id},'ADMIN')">Remove ADMIN</button>` : '';
                     const block = u.blocked ? `<button onclick="unblockUser(${u.id})">Unblock</button>` : `<button onclick="blockUser(${u.id})">Block</button>`;
-                    return `<tr><td>${u.username}</td><td>${roles}</td><td>${u.blocked}</td><td>${add} ${del} ${block}</td></tr>`;
+                    const mfa = `<button onclick="requireMfa(${u.id})">Require MFA</button>`;
+                    const logout = `<button onclick="forceLogout(${u.id})">Force Logout</button>`;
+                    return `<tr><td>${u.username}</td><td>${roles}</td><td>${u.blocked}</td><td>${add} ${del} ${block} ${mfa} ${logout}</td></tr>`;
                 }).join('');
         }
     }
@@ -88,7 +109,28 @@
         loadUsers();
     }
 
+    async function requireMfa(id) {
+        const res = await fetch(`/admin/users/${id}/require-mfa`, {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + token}
+        });
+        if (res.ok) {
+            const data = await res.json();
+            alert('MFA secret: ' + data.secret);
+        }
+        loadUsers();
+    }
+
+    async function forceLogout(id) {
+        await fetch(`/admin/users/${id}/force-logout`, {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + token}
+        });
+        loadUsers();
+    }
+
     loadStats();
+    loadVisitStats();
     loadEvents();
     loadUsers();
 

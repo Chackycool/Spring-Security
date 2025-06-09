@@ -62,6 +62,8 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
         }
+        user.setForceLogout(false);
+        userRepository.save(user);
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
         logEvent(user.getUsername(), EventType.LOGIN);
@@ -86,7 +88,7 @@ public class AuthController {
         }
         String username = jwtService.extractUsername(request.refreshToken());
         User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null || user.isBlocked() || userBlacklistService.isBlacklisted(user.getUsername())) {
+        if (user == null || user.isBlocked() || userBlacklistService.isBlacklisted(user.getUsername()) || user.isForceLogout()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         if (user.getMfaSecret() != null) {
