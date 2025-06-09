@@ -49,8 +49,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (user.isMfaChallenge()) {
-            if (user.getMfaSecret() == null || request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            if (user.getMfaSecret() != null) {
+                if (request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
             }
             user.setMfaChallenge(false);
             userRepository.save(user);
@@ -95,8 +97,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         if (user.isMfaChallenge()) {
-            if (user.getMfaSecret() == null || request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            if (user.getMfaSecret() != null) {
+                if (request.mfaCode() == null || !mfaService.verifyCode(user.getMfaSecret(), request.mfaCode())) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
             }
             user.setMfaChallenge(false);
             userRepository.save(user);

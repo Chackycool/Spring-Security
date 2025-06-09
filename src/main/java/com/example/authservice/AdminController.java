@@ -45,8 +45,13 @@ public class AdminController {
     public ResponseEntity<User> addRole(@PathVariable Long id, @RequestBody RoleRequest request) {
         return userRepository.findById(id)
                 .map(u -> {
-                    u.getRoles().add(Role.valueOf(request.role()));
-                    userRepository.save(u);
+                    Role role = Role.valueOf(request.role());
+                    if (u.getRoles().add(role)) {
+                        if (role == Role.ADMIN && u.getMfaSecret() == null) {
+                            u.setMfaChallenge(true);
+                        }
+                        userRepository.save(u);
+                    }
                     return ResponseEntity.ok(u);
                 }).orElse(ResponseEntity.notFound().build());
     }

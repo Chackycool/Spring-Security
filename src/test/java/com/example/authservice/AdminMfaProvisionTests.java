@@ -35,4 +35,20 @@ class AdminMfaProvisionTests {
                 .content("{\"username\":\"newadmin\",\"password\":\"pass\"}"))
                 .andExpect(status().isAccepted());
     }
+
+    @Test
+    void grantingAdminTriggersMfaChallenge() throws Exception {
+        User user = new User();
+        user.setUsername("user1");
+        user.setPassword(passwordEncoder.encode("pass"));
+        userRepository.save(user);
+
+        mockMvc.perform(post("/admin/users/" + user.getId() + "/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"ADMIN\"}"))
+                .andExpect(status().isOk());
+
+        User updated = userRepository.findById(user.getId()).orElseThrow();
+        assert(updated.isMfaChallenge());
+    }
 }
