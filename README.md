@@ -9,10 +9,12 @@ This repository contains an example Authentication service built using **Java 17
 - Role support: `USER`, `ADMIN`, `MODERATOR`
 - Token revocation using a blacklist stored in a database
 - Logout that adds the refresh token to the blacklist
+- Ability to maintain a blacklist of usernames
 - Event logging for logins, logouts and access attempts
 - A simple Security Dashboard for administrators
 - Endpoints to block tokens or terminate sessions
 - Optional MFA support using TOTP codes
+- Login page prompts for MFA code when required
 - Persistent H2 file database for data retention across restarts
 - Dashboard displays recent events and allows managing user roles
 

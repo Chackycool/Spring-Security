@@ -13,6 +13,7 @@ import com.example.authservice.EventLog;
 import com.example.authservice.EventType;
 import com.example.authservice.TokenBlacklistService;
 import com.example.authservice.EventLogRepository;
+import com.example.authservice.UserBlacklistService;
 
 @RestController
 @RequestMapping("/auth")
@@ -25,6 +26,7 @@ public class AuthController {
     private final TokenBlacklistService blacklistService;
     private final EventLogRepository eventLogRepository;
     private final MfaService mfaService;
+    private final UserBlacklistService userBlacklistService;
 
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody RegisterRequest request) {
@@ -45,7 +47,7 @@ public class AuthController {
         if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        if (user.isBlocked()) {
+        if (user.isBlocked() || userBlacklistService.isBlacklisted(user.getUsername())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (user.getRoles().contains(Role.ADMIN) && user.getMfaSecret() == null) {
@@ -84,7 +86,7 @@ public class AuthController {
         }
         String username = jwtService.extractUsername(request.refreshToken());
         User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null || user.isBlocked()) {
+        if (user == null || user.isBlocked() || userBlacklistService.isBlacklisted(user.getUsername())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         if (user.getMfaSecret() != null) {
