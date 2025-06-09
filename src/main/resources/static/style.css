@@ -1,10 +1,10 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f2f5;
+    background: linear-gradient(135deg,#84fab0,#8fd3f4);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
 }
 
@@ -12,8 +12,8 @@ body {
     background-color: #fff;
     padding: 40px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    width: 320px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    width: 360px;
 }
 
 h1 {
@@ -43,7 +43,7 @@ button {
     font-size: 16px;
     cursor: pointer;
     margin-top: 10px;
-}
+    }
 
 button:hover {
     background-color: #45a049;
@@ -56,4 +56,19 @@ button:hover {
 footer {
     text-align: center;
     margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+th {
+    background-color: #f2f2f2;
 }

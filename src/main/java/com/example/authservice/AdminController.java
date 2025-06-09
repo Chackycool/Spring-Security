@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.List;
 
+import com.example.authservice.MfaService;
+
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
@@ -17,6 +19,7 @@ public class AdminController {
     private final EventLogRepository eventLogRepository;
     private final UserRepository userRepository;
     private final UserBlacklistService userBlacklistService;
+    private final MfaService mfaService;
 
     @PostMapping("/revoke")
     public ResponseEntity<Void> revoke(@RequestBody TokenRequest request) {
@@ -30,6 +33,13 @@ public class AdminController {
         long logouts = eventLogRepository.countByEventType(EventType.LOGOUT);
         long accesses = eventLogRepository.countByEventType(EventType.ACCESS);
         return Map.of("logins", logins, "logouts", logouts, "accesses", accesses);
+    }
+
+    @GetMapping("/visit-stats")
+    public List<Map<String, Object>> visitStats() {
+        return eventLogRepository.countPerDay(EventType.ACCESS).stream()
+                .map(r -> Map.of("day", r[0].toString(), "count", ((Number) r[1]).longValue()))
+                .toList();
     }
 
     @GetMapping("/events")
@@ -72,6 +82,29 @@ public class AdminController {
                 }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/users/{id}/force-logout")
+    public ResponseEntity<Void> forceLogout(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(u -> {
+                    u.setForceLogout(true);
+                    userRepository.save(u);
+                    return ResponseEntity.ok().build();
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/users/{id}/require-mfa")
+    public ResponseEntity<MfaResponse> requireMfa(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(u -> {
+                    if (u.getMfaSecret() == null) {
+                        u.setMfaSecret(mfaService.generateSecret());
+                    }
+                    u.setForceLogout(true);
+                    userRepository.save(u);
+                    return ResponseEntity.ok(new MfaResponse(u.getMfaSecret()));
+                }).orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/users/{id}/unblock")
     public ResponseEntity<User> unblockUser(@PathVariable Long id) {
         return userRepository.findById(id)
@@ -102,4 +135,5 @@ public class AdminController {
     public record RoleRequest(String role) {}
     public record TokenRequest(String token) {}
     public record UsernameRequest(String username) {}
+    public record MfaResponse(String secret) {}
 }

@@ -32,6 +32,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private boolean blocked = false;
 
+    @Column(nullable = false)
+    private boolean forceLogout = false;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
